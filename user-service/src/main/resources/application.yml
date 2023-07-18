@@ -1,0 +1,15 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: user-service
+
+eureka:
+  client:
+#    eureka server 등록 -> client 들은 server 에 등록하여 사용
+    register-with-eureka: true
+    fetch-registry: true
+#    server 의 위치를 등록
+    service-url:
+      defaultZOne : http://localhost:8761/eureka
