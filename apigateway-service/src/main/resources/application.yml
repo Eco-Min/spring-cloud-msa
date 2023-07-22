@@ -6,12 +6,18 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: http://localhost:8761/eureka
-# yml ?? gatdway filter ?? ?? -> javacode ?? ?? ??
+# yml 에서 gatdway filter 적용 -> javacode 에서도 적용 가능
 spring:
   application:
     name: apigateway-service
   cloud:
     gateway:
+      default-filters:
+        - name: GlobalFilter
+          args:
+            baseMessage: Spring Cloud Gateway Global Filter
+            preLogger: true
+            postLogger: true
       routes:
         - id: first-service
           uri: http://localhost:8081/
@@ -29,5 +35,6 @@ spring:
             - AddRequestHeader=second-request, second-request-headerYml
             - AddResponseHeader=second-response, second-response-headerYml
             - CustomFilter
+
 
 
