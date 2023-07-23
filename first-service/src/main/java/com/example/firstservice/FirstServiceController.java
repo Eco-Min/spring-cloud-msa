@@ -30,4 +30,10 @@ public class FirstServiceController {
         return "Hello World in First Service.";
     }
 
+    /* CustomFiler 용*/
+    @GetMapping("/check")
+    public String check() {
+        return "Hi, there. This is a message from first Service.";
+    }
+
 }
