@@ -40,3 +40,7 @@ java -jar -Dserver.port=9002 user-service-0.0.1-SNAPSHOT.jar
 [Netflix Zuul maintenace 상태](https://spring.io/blog/2018/12/12/spring-cloud-greenwich-rc1-available-now#spring-cloud-netflix-projects-entering-maintenance-mode)
 
 ## 04 first-service, second-service, apigatdway-service
+
+## 05 gateway filter
+
+## 06 LoadBalancer
