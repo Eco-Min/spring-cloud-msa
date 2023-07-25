@@ -5,11 +5,30 @@ server:
 spring:
   application:
     name: user-service
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+      path: /h2-console
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=MYSQL
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
 
 eureka:
   instance:
 #    만약 port 가 0(random) 인경우 구분하기위해
-    instance-id: ${spring.cloud.client.hostname}:${spring.application.instance_id:${random.value}}
+#    instance-id: ${spring.cloud.client.hostname}:${spring.application.instance_id:${random.value}}
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
   client:
 #    eureka server 등록 -> client 들은 server 에 등록하여 사용
     register-with-eureka: true
@@ -17,3 +36,7 @@ eureka:
 #    server 의 위치를 등록
     service-url:
       defaultZOne : http://localhost:8761/eureka
+
+
+greeting:
+  message: Welcome to the Simple E-commerce.

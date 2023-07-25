@@ -44,3 +44,5 @@ java -jar -Dserver.port=9002 user-service-0.0.1-SNAPSHOT.jar
 ## 05 gateway filter
 
 ## 06 LoadBalancer
+
+## 07 e-commerce user-service 구현
