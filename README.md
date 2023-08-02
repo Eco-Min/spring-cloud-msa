@@ -45,4 +45,8 @@ java -jar -Dserver.port=9002 user-service-0.0.1-SNAPSHOT.jar
 
 ## 06 LoadBalancer
 
+- first, second 서비스들은 위에 있는 내욜들을 보여주기 위해 했던 내용 앞으로는 작은 프로젝트로해서 대락젹인 msa 구성을 알아볼 예정
+
 ## 07 e-commerce user-service 구현
+
+- h2 db, JPA, 간단한 security 적용
