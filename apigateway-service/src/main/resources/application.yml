@@ -47,6 +47,10 @@ spring:
                 baseMessage: Hi, there. Logging Filter
                 preLogger: true
                 postLogger: true
+        - id: catalog-service
+          uri: lb://CATALOG-SERVICE
+          predicates:
+            - Path=/catalog-service/**
 
 
 
