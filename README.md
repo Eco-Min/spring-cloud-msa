@@ -1,33 +1,13 @@
 # spring-cloud-msa
-
+출처 : [Spring Cloud로 개발하는 마이크로서비스](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C-%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%EC%84%9C%EB%B9%84%EC%8A%A4/dashboard)
 ## index
 
 - [01 discovery_service](./discoveryservice/)
 
 - [02 user-service](./user-service/)
 
-## 03 API Gateway Service
+- [03 API Gateway Service](./apigateway-service/)
 
-- 인증 및 권한 부여
-- 서비스 검색 통합
-- 응답 캐싱
-- 정책, 회 차단기 및 Qos 다시시도
-- 부하분산
-- 로깅 추적, 상관관계
-- 헤더, 쿼리문자열 청구 변환
-- IP 허용 목록에 추가
-
-### spfing cloud 에서의 msa 간 통신
-
-1. RestTemplate
-2. Feign Client
-
-- Ribbon : Client side Load Balancer (서버에 가해지는 부하를 분산 해주는 장치 또는 기술)  
-  load banalacer를 해주기 위한 서비스 -> 비동기 지원(X) 최신에서는 잘 안쓰고 있다고 합니다.
-  - 서비스이름으로 호출
-  - Health Check
-
-[Netflix Zuul maintenace 상태](https://spring.io/blog/2018/12/12/spring-cloud-greenwich-rc1-available-now#spring-cloud-netflix-projects-entering-maintenance-mode)
 
 ## 04 first-service, second-service, apigatdway-service
 
