@@ -42,9 +42,11 @@ public interface StoreClient{
 - [Netflix Zuul maintenace 상태](https://spring.io/blog/2018/12/12/spring-cloud-greenwich-rc1-available-now#spring-cloud-netflix-projects-entering-maintenance-mode)
 
 ## Spring Gateway service
+
 [first-service](../first-service/), [second-service](../second-service/) 를 api gateway에 붙일 예정이다.
 
 application.yml 
+
 ```yml
 server:
   port: 8080
@@ -88,8 +90,9 @@ response-header 의 경우 brawoser 의 network 에서 확인이 가능하다.
 yml 에서 적용 되려면 자바 코드를 막아야한다 그래서 ```@Configuration, @Bean``` 을 주석처리 하자   
 
 applicationl.yml
+
 ```yml
-...
+      ...
       routes:
         - id: first-service #service name
           uri: http://localhost:8081/ #uri 설정
@@ -105,5 +108,218 @@ applicationl.yml
           filters:
             - AddRequestHeader=second-request, second-request-headerYml
             - AddResponseHeader=second-response, second-response-headerYml
-...
+        ...
 ```
+
+## Spring Cloud Gateway - Custom Filter
+
+제목 그대로 custom하게 만드는 filter 이다.
+CustomFilter 는 반드시 ```AbstractGatewayFilterFactory``` 를 상속받아 자기 자신의 내부 클래스인 
+```Config``` 를 만들어야한다
+
+<details>
+<summary>CustomFilter</summary>
+
+```java
+@Component
+@Slf4j
+public class CustomFilter extends AbstractGatewayFilterFactory<CustomFilter.Config> {
+
+    public CustomFilter() {
+        super(Config.class);
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        // Custom Pre Filter
+        return ((exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
+
+            log.info("Custom PRE filter: request id -> {}", request.getId());
+
+            return chain.filter(exchange).then(Mono.fromRunnable(() ->
+                    log.info("Custom Post filter: response code -> {}", response.getStatusCode())
+            ));
+        });
+    }
+
+    public static class Config {
+        // Put the Configuration properties
+    }
+}
+```
+
+</details>
+
+위으 코드를 만들었다면 yml 에 있는 기존 filter 를 주석처리 하여야 한다.
+
+application.yml
+
+```yml
+        ...
+        - id: first-service
+          uri: lb://MY-FIRST-SERVICE
+          predicates:
+            - Path=/first-service/**
+          filters:
+#            - AddRequestHeader=first-request, first-request-headerYml
+#            - AddResponseHeader=first-response, first-response-headerYml
+            - CustomFilter
+        ...
+```
+</details>
+<br>
+
+## Spring Cloud Gateway - Global Filter
+
+개별 적인 filter 가 아닌 해당 api 가 실행될때 gateway 에서 먼저 실행 해주는 전역 설정 filter 이다.
+일반적인 거랑 비슷하지만 이번에는 ```Config``` 를 사용 할 예정 입니다.
+
+<details>
+<summary>globalFilter</summary>
+
+```java
+@Component
+@Slf4j
+public class GlobalFilter extends AbstractGatewayFilterFactory<GlobalFilter.Config> {
+
+    public GlobalFilter() {
+        super(Config.class);
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        // Custom Pre Filter
+        return ((exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
+
+            log.info("Global filter: {}", config.baseMessage);
+
+            if (config.preLogger) {
+                log.info("Global filter Start: request id -> {}", request.getId());
+            }
+
+            return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+                        if (config.postLogger) {
+                            log.info("Global filter end: response code -> {}", response.getStatusCode());
+                        }
+                    }
+            ));
+        });
+    }
+
+    @Data
+    public static class Config {
+        private String baseMessage;
+        private boolean preLogger;
+        private boolean postLogger;
+    }
+}
+```
+</details>
+<br>
+
+이제 위 의 코드를 작성 하였다면 yml에 저장 해야 한다.
+
+application.yml
+
+```yml
+...
+spring:
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      default-filters:
+        - name: GlobalFilter
+          args:
+            baseMessage: Spring Cloud Gateway Global Filter
+            preLogger: true
+            postLogger: true
+      routes:
+      ...
+```
+
+```default-filters``` 를 보면 우리가 ```GlobalFilter``` 에서 본 ```Config``` 의 값 을 입력하는걸 알 수 있다.
+
+## Spring Cloud Gateway - Login Filter
+
+Login filter 를 간단하게 만들어 볼 예정이다. second-service 에서만 넣을 거지만 Login fitler를 사용하게 되면
+
+
+Gatdway Client -> Gatdway Handler -> Global Filter -> Custom Filter -> Login Filter -> Proxied Service
+
+순서대로 실행 될 예정입니다.
+
+<details>
+<summary>loginfilter</summary>
+
+```java
+@Component
+@Slf4j
+public class LoggingFilter extends AbstractGatewayFilterFactory<LoggingFilter.Config> {
+
+    public LoggingFilter() {
+        super(Config.class);
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        GatewayFilter filter = new OrderedGatewayFilter((exchange, chain) ->{
+            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
+
+            log.info("Logging filter: {}", config.baseMessage);
+
+            if (config.preLogger) {
+                log.info("Logging Pre filter : request id -> {}", request.getId());
+            }
+
+            return chain.filter(exchange).then(Mono.fromRunnable(() ->
+                    log.info("Logging Post filter : response code -> {}", response.getStatusCode())
+            ));
+        }, Ordered.LOWEST_PRECEDENCE);
+
+//        Ordered.HIGHEST_PRECEDENCE -> filter의 우선순위 설정 값이다 -> 최우선
+//        Ordered.LOWEST_PRECEDENCE -> filter의 우선순위 설정 값이다 -> 나중
+
+        return filter;
+    }
+
+    @Data
+    public static class Config {
+        private String baseMessage;
+        private boolean preLogger;
+        private boolean postLogger;
+    }
+}
+```
+</details>
+<br>
+
+
+이제 위 의 코드를 작성 하였다면 yml에 저장 해야 한다.
+
+application.yml
+
+```yml
+        ....
+        - id: second-service
+          uri: http://localhost:8082/
+          predicates:
+            - Path=/second-service/**
+          filters:
+            - AddRequestHeader=second-request, second-request-headerYml
+            - AddResponseHeader=second-response, second-response-headerYml
+            - name: CustomFilter
+            - name: LoggingFilter
+              args:
+                baseMessage: Hi, there. Logging Filter
+                preLogger: true
+                postLogger: true
+          ....
+```
+
+```default-filters``` 를 보면 우리가 ```GlobalFilter``` 에서 본 ```Config``` 의 값 을 입력하는걸 알 수 있다.
