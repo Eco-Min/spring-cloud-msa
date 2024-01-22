@@ -1,6 +1,6 @@
-# user-service
+# 02. user-service
 
-## 02. user-service 간단한 등록
+## user-service 간단한 등록
 
 discoveryServer 에 이제 해당 서비스를 등록 하려고 한다.
 

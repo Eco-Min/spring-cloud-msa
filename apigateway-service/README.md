@@ -1,4 +1,4 @@
-# apigateway-service
+# 03. apigateway-service
 
 사용자가 설정한 라우팅 설정에 따라서 endPoint 로 클라이언트 대신하여 요청 및 응답을 하는 proxy 역활을 한다.   
 시스템의 내부구조는 숨기고 외부에는 가공하여 응답할 수 있다. 
@@ -322,4 +322,62 @@ application.yml
           ....
 ```
 
-```default-filters``` 를 보면 우리가 ```GlobalFilter``` 에서 본 ```Config``` 의 값 을 입력하는걸 알 수 있다.
+## Spring cloude Gateway - load balance
+
+Eureka 서버에 등록 하여 들어온 요청 url 로 포워딩 하는 역활을 한다.
+
+client 요청 -> API Gateway -> Eureka (등록된 Api 다시 Gateway 전달) -> API Gateway -> 해당 url 서버
+
+buil.gradle
+
+```gradle
+implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+```
+
+위처럼 작동 하게 하려면 yml 에 있는 gateway 설정 정보를 조금 손봐야한다.
+
+application.yml
+<details>
+<summary>gateway load balanace</summary>
+
+```yml 
+spring:
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      default-filters:
+        ....
+      routes:
+        - id: first-service
+          uri: lb://MY-FIRST-SERVICE
+          predicates:
+            - Path=/first-service/**
+          filters:
+            - CustomFilter
+        - id: second-service
+          uri: lb://MY-SECOND-SERVICE
+          predicates:
+            - Path=/second-service/**
+          filters:
+            - AddRequestHeader=second-request, second-request-headerYml
+            - AddResponseHeader=second-response, second-response-headerYml
+            - name: CustomFilter
+            - name: LoggingFilter
+              args:
+                baseMessage: Hi, there. Logging Filter
+                preLogger: true
+                postLogger: true
+```
+</details>
+<br>
+
+
+uri 는 Eureka 에 등록된 각 API 서비스의 이름 으로 되체된다.
+
+load balancer 를 확인 하려면 first-service의 port 를 변경한후 first-service를 두개 실행 하면
+Euereak server 에 MY-FIRST-SERVICE 인스턴스가 2개 생성된다. -> http://127.0.0.1/first-service/check 실행 해보자.
+
+first-service/chekck 는 port 번호를 출력 한다.
+
+
