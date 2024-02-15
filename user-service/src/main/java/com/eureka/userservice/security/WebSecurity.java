@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,6 +14,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 @Configuration
@@ -35,33 +36,32 @@ public class WebSecurity {
     @Bean
     public SecurityFilterChain filter(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = getAuthenticationManager(http);
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests((authorizeRequests) ->
-                        /*authorizeRequests
-                                .requestMatchers("/users/**").permitAll()
-                                .anyRequest().permitAll()*/
+        http.csrf(AbstractHttpConfigurer::disable);
+
+         http.authorizeHttpRequests((authorizeRequests) ->
                         authorizeRequests
+                                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+                                .requestMatchers(new AntPathRequestMatcher("/users", "POST")).permitAll()
                                 .requestMatchers("/**")
-                                .access((authentication, object) ->
-                                        new AuthorizationDecision(hasIpAddress.matches(object.getRequest())))
-
+                                /*.access((authentication, object) ->
+                                        new AuthorizationDecision(hasIpAddress.matches(object.getRequest())))*/
+                                .access(new WebExpressionAuthorizationManager("hasIpAddress('127.0.0.1') or hasIpAddress('192.168.219.103')"))
+                                .anyRequest().authenticated()
                 )
-
-                .headers(httpSecurityHeadersConfigurer ->
-                        httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
-                )
-                .addFilter(getAuthenticationFilter(authenticationManager))
                 .authenticationManager(authenticationManager);
-//                .apply(new CustomSecurityFilterManager());
+
+        http.addFilter(getAuthenticationFilter(authenticationManager));
+
+        http.headers((headers) -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
+
+        /*http.headers(httpSecurityHeadersConfigurer ->
+                httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));*/
 
         return http.build();
     }
 
     private AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) {
-        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
-        authenticationFilter.setAuthenticationManager(authenticationManager);
-        return authenticationFilter;
+        return new AuthenticationFilter(authenticationManager);
     }
 
     private AuthenticationManager getAuthenticationManager(HttpSecurity security) throws Exception {
@@ -69,13 +69,4 @@ public class WebSecurity {
         authenticationManagerBuilder.userDetailsService(loginService).passwordEncoder(passwordEncoder());
         return authenticationManagerBuilder.build();
     }
-
-    /*public static class CustomSecurityFilterManager extends AbstractHttpConfigurer<CustomSecurityFilterManager, HttpSecurity> {
-        @Override
-        public void configure(HttpSecurity builder) throws Exception {
-            AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
-            builder.addFilter(new AuthenticationFilter(authenticationManager));
-            super.configure(builder);
-        }
-    }*/
 }

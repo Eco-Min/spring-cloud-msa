@@ -33,3 +33,7 @@
 ### [04-4 CATALOG](./catalog-service/README.md)
 
 ### [04-5 Order](./orderservice/READEME.md)
+
+### [04-6 user-service security](./user-service/README.md#04-6-spring-security-설정)
+
+### [04-7 user-service security filter](./apigateway-service/README.md#04-7-user-service-security-filter)

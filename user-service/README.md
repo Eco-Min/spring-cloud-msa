@@ -169,6 +169,40 @@ implementation 'org.springframework.boot:spring-boot-starter-security'
 
 - [security](./src/main/java/com/eureka/userservice/security/) 를 작성 합니다.
 
+sercurity 자세한 작성은 후에 확인할 것입니다. 간단하게 알아보자면
+
+WebSerucity.java
+``` java
+@Configuration
+@RequiredArgsConstructor
+@EnableWebSecurity
+public class WebSecurity {
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain filter(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable);
+
+        http.authorizeHttpRequests((authorizeRequests) ->
+                        authorizeRequests
+                                .requestMatchers("/**")
+                                .permitAll();
+                )
+
+
+        http.headers(httpSecurityHeadersConfigurer ->
+                httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+
+        return http.build();
+    }
+```
+
+작성후 UserServiceImpl.java 에 BycryptePaswordEncoder 를 DI 받아 사용한다.
+
 <br>
 
 user-service 를 [apigateway](/apigateway-service/src/main/resources/application.yml) 에 등록 해야 한다. 
@@ -198,3 +232,13 @@ user-service controller 의 health_check 를 실행 하면 확인할 수 있다.
 
 둘다 확인이 되어야 한다.
 조금 깊게 이야기 하자면 만약 ```userController.java``` 에 /user-service 로 prefix 적용이 안되어 있으면 routes등록을 하더라도 gateway 에서 접근이 불가능하다. 즉, apiGateway 에서 predicates 에 값을 지정하더라도 실제 url 은 /user-service/ 를 포함한 값으로 넘어가기 때문이다.
+
+## 04-6 Spring Security 설정
+
+### AuthenticationFilter 추가
+
+- [AuthenticationFilter](/src/main/java/com/eureka/userservice/security/AuthenticationFilter.java)
+- [LoginService](/src/main/java/com/eureka/userservice/security/login/LoginService.java)
+- [WebSecurity](/src/main/java/com/eureka/userservice/security/WebSecurity.java)
+
+AuthenticationFilter, LoginService 만든후 WebSecurity 에서 filter 를 등록하면 된다.

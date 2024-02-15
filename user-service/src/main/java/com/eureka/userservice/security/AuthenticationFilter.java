@@ -19,9 +19,9 @@ import java.util.ArrayList;
 @Slf4j
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-//    public AuthenticationFilter(AuthenticationManager authorizationManager) {
-//        super.setAuthenticationManager(authorizationManager);
-//    }
+    public AuthenticationFilter(AuthenticationManager authorizationManager) {
+        super(authorizationManager);
+    }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,

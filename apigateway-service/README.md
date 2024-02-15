@@ -380,4 +380,43 @@ Euereak server 에 MY-FIRST-SERVICE 인스턴스가 2개 생성된다. -> http:/
 
 first-service/chekck 는 port 번호를 출력 한다.
 
+## 04-7 user-service security filter
+
+login 정보 요청시 ```user-service``` 에 넘기는 정보를 처리 해야한다.
+
+application.yml
+
+```yaml
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/login
+            - Method=POST
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/users
+            - Method=POST
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+            - Method=GET
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+```
+
+여기서 id 를 여러게 주어 path 를 설정 할 수 있다.   
+RemoveRequestHeader 들어오는 Cookie 헤더를 지우며   
+RewritePath 해당 path 설정으로 인해 ```/user-service/**``` -> ```/**``` 로 들어오게된다.   
+이렇게 되면 user-service, UserController 에서 더이상 RequestMapping 으로 지정하지 않아도 된다.
+
 
